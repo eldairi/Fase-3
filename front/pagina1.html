@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crear Ticket</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+  <div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2>Crear Ticket</h2>
+      <a href="index.html" class="btn btn-secondary">Volver</a>
+    </div>
+
+    <form id="crear-ticket-form">
+      <!-- Cliente -->
+      <div class="mb-3">
+        <label for="cliente" class="form-label">Cliente</label>
+        <select id="cliente" class="form-select" required>
+          <option value="">Seleccione un cliente</option>
+        </select>
+      </div>
+
+      <!-- Módulo -->
+      <div class="mb-3">
+        <label for="modulo" class="form-label">Módulo</label>
+        <select id="modulo" class="form-select" required>
+          <option value="">Seleccione un módulo</option>
+        </select>
+      </div>
+
+      <!-- Severidad -->
+      <div class="mb-3">
+        <label for="severidad" class="form-label">Severidad</label>
+        <select id="severidad" class="form-select" required>
+          <option value="">Seleccione una severidad</option>
+        </select>
+      </div>
+
+      <!-- Descripción Breve -->
+      <div class="mb-3">
+        <label for="descripcion-breve" class="form-label">Descripción Breve</label>
+        <input type="text" class="form-control" id="descripcion-breve" required>
+      </div>
+
+      <!-- Descripción Detallada -->
+      <div class="mb-3">
+        <label for="descripcion-detallada" class="form-label">Descripción Detallada</label>
+        <textarea class="form-control" id="descripcion-detallada" rows="4" required></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Crear Ticket</button>
+    </form>
+
+    <!-- Resultado de la operación (Este es el contenedor que se actualizará para mostrar el mensaje final) -->
+    <div id="resultado" class="text-center mt-4"></div>
+
+    <!-- Imagen de carga -->
+    <div id="loading" class="d-none text-center">
+      <img src="https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExYWdpbDF2OG10bWIwZ2cyZDRnNWlmczExNDhma3Q5aGZ1aGNmNWZoaiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/xUPGcml9WG8YmFhIgE/giphy.webp" alt="Cargando..." />
+    </div>
+
+    <!-- Imagen de éxito cuando se crea el ticket correctamente -->
+    <div id="exito" class="d-none text-center mt-4">
+      <img src="https://64.media.tumblr.com/b6f512d8e47134e3cc721a0058727daf/14e9663669c0ace8-6a/s540x810/c8800ef18b4300a3faeb8b85b6a6048c9cd07d45.gifv" alt="Éxito" />
+    </div>
+
+    <!-- Imagen de error cuando algo falla -->
+    <div id="error" class="d-none text-center mt-4">
+      <img src="https://www.icegif.com/wp-content/uploads/2023/11/icegif-273.gif" alt="Error" />
+    </div>
+  </div>
+
+  <!-- Inclusión de archivos JS -->
+  <script src="ticket.js"></script>
+  <script src="pagina1.js"></script>
+
+  <script>
+    // Función para cargar los datos de clientes, módulos y severidades
+    async function cargarDatos() {
+      try {
+        document.getElementById('loading').classList.remove('d-none');
+
+        const clientesRes = await fetch('http://localhost:3000/api/clientes');
+        const modulosRes = await fetch('http://localhost:3000/api/modulos');
+        const severidadesRes = await fetch('http://localhost:3000/api/severidades');
+
+        if (!clientesRes.ok || !modulosRes.ok || !severidadesRes.ok) {
+          throw new Error("Hubo un problema al obtener los datos.");
+        }
+
+        const clientes = await clientesRes.json();
+        const modulos = await modulosRes.json();
+        const severidades = await severidadesRes.json();
+
+        const clienteSelect = document.getElementById('cliente');
+        const moduloSelect = document.getElementById('modulo');
+        const severidadSelect = document.getElementById('severidad');
+
+        // Limpiar las opciones anteriores antes de agregar nuevas
+        clienteSelect.innerHTML = '<option value="">Seleccione un cliente</option>';
+        moduloSelect.innerHTML = '<option value="">Seleccione un módulo</option>';
+        severidadSelect.innerHTML = '<option value="">Seleccione una severidad</option>';
+
+        // Agregar nuevas opciones para Clientes
+        clientes.forEach(cliente => {
+          const option = document.createElement('option');
+          option.value = cliente.ID_CLIENTE;
+          option.textContent = cliente.NOM_CLIENTE;
+          clienteSelect.appendChild(option);
+        });
+
+        // Agregar nuevas opciones para Módulos
+        modulos.forEach(modulo => {
+          const option = document.createElement('option');
+          option.value = modulo.ID_MODULO;
+          option.textContent = modulo.NOM_MODULO;
+          moduloSelect.appendChild(option);
+        });
+
+        // Agregar nuevas opciones para Severidades
+        severidades.forEach(severidad => {
+          const option = document.createElement('option');
+          option.value = severidad.ID_SEVERIDAD;
+          option.textContent = severidad.NOM_SEVERIDAD;
+          severidadSelect.appendChild(option);
+        });
+
+        document.getElementById('loading').classList.add('d-none');
+      } catch (error) {
+        console.error("Error al cargar los datos:", error);
+        document.getElementById('error').classList.remove('d-none');
+        document.getElementById('loading').classList.add('d-none');
+      }
+    }
+
+    // Manejo del envío del formulario
+    document.getElementById('crear-ticket-form').addEventListener('submit', async function (event) {
+      event.preventDefault();
+
+      const cliente = document.getElementById('cliente').value;
+      const modulo = document.getElementById('modulo').value;
+      const severidad = document.getElementById('severidad').value;
+      const descripcionBreve = document.getElementById('descripcion-breve').value;
+      const descripcionDetallada = document.getElementById('descripcion-detallada').value;
+
+      const datosTicket = {
+        cliente,
+        modulo,
+        severidad,
+        descripcionBreve,
+        descripcionDetallada,
+      };
+
+      if (!cliente || !modulo || !severidad || !descripcionBreve || !descripcionDetallada) {
+        document.getElementById('error').classList.remove('d-none');
+        return;
+      }
+
+      document.getElementById('loading').classList.remove('d-none');
+      document.getElementById('exito').classList.add('d-none');
+      document.getElementById('error').classList.add('d-none');
+
+      try {
+        const respuesta = await fetch('http://localhost:3000/api/tickets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(datosTicket),
+        });
+
+        const resultado = await respuesta.json();
+
+         if (respuesta.ok) {
+        document.getElementById('resultado').innerHTML = `
+          <p class="text-success">Ticket creado exitosamente.</p>
+          <p>ID del Ticket: ${resultado.ticketId}</p> <!-- Aquí se muestra el ID del ticket -->
+          <p>Estado de la transacción: Trabajando en solución. </p>
+        `;
+        document.getElementById('exito').classList.remove('d-none');
+      } else {
+        // En lugar de mostrar el mensaje específico de error, se mostrará solo la imagen de error.
+        document.getElementById('error').classList.remove('d-none');
+      }
+
+      } catch (error) {
+        console.error("Error al crear el ticket:", error);
+        // Se elimina el mensaje de texto y solo se muestra la imagen de error
+        document.getElementById('error').classList.remove('d-none');
+      } finally {
+        document.getElementById('loading').classList.add('d-none');
+      }
+    });
+
+    // Cargar datos al cargar la página
+    window.onload = cargarDatos;
+  </script>
+</body>
+</html>
